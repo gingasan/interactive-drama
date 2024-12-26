@@ -24,7 +24,7 @@ vi openai_key.txt
 python app.py
 ```
 
-3. Open the web in the localhost
+3. Open the web on the localhost http://localhost:8000/
 
 ```bash
 python -m http.server 8000

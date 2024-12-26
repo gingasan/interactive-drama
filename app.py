@@ -57,7 +57,7 @@ class ADramaLLM(DramaLLM):
             self.ready_for_next_scene = True
 
 
-with open("script.yaml") as file:
+with open("script_zh.yaml") as file:
     SCRIPT = yaml.safe_load(file)
 DRAMA = ADramaLLM("alpha", SCRIPT["narrative"])
 app = Flask(__name__)
