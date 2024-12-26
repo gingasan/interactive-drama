@@ -92,9 +92,6 @@ def calculate():
     if DRAMA.script.mode == "v1":
         DRAMA.calculate(aid=aid, x=x, bid=bid, cid=cid, content=content)
         DRAMA.v1()
-    elif DRAMA.script.mode == "v2":
-        if DRAMA.v2_pre(content) != False:
-            DRAMA.calculate(aid=aid, x=x, bid=bid, cid=cid, content=content)
     elif DRAMA.script.mode == "ex":
         DRAMA.calculate(aid=aid, x=x, bid=bid, cid=cid, content=content)
 
@@ -110,13 +107,10 @@ def calculate():
         if not char.to_do:
             continue
 
-        if DRAMA.script.mode == "ex":
-            decision = char.ex_interact()
-        else:
-            decision = char.act()
+        decision = char.act()
         _, x, b, c, content, _ = get_input(decision)
 
-        if x == "-speak" or x == "-scream":
+        if x == "-speak":
             state["dialogues"][char_id] = content
             DRAMA.calculate(char_id, x, b, None, content=content)
         elif x == "-move":

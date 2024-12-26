@@ -1,6 +1,5 @@
 import math
 from dataclasses import dataclass
-from typing import Tuple
 from utils import *
 
 
@@ -127,12 +126,6 @@ class Drama:
             src.interact_with = self.characters[bid]
             self.characters[bid].interact_with = src
             src.interact(x, cid, **kwargs)
-
-        if x == "-scream":
-            for t in self.characters:
-                if t == src.id or t == src.interact_with.id:
-                    continue
-                self.characters[t].new_memory(src.id, "-scream", src.interact_with.id, content=kwargs["content"])
 
         self.record(aid, x, bid, cid, **kwargs)
 
@@ -307,32 +300,6 @@ class CharacterLLM(Character):
                                     view=dumps(self.view),
                                     interact_with=self.interact_with.id if self.interact_with else "",
                                     recent_memory=dumps(self.recent_memory),
-                                    holdings=dumps([v.state for _, v in self.holdings.items()]),
-                                    motivation=self.motivation,
-                                    narrative=yamld(self.narrative))
-
-        response = self.query_fct([{"role": "user", "content": prompt}])
-        self.log("\n".join([prompt, response]), "plan")
-
-        response = json.loads(response.split("```json\n")[-1].split("\n```")[0])
-        motivation = response["预设的情节"]
-        plan = response.get("当前的计划", self.plan)
-        decision = response["决策"]
-
-        if self.narrative is not None:
-            for a, b in zip(self.narrative, motivation):
-                if not get_values(a)[0]["完成"] and b[1]:
-                    get_values(a)[0]["完成"] = True
-        self.plan = plan
-        self.decision += [decision]
-
-    def ex_interact(self):
-        prompt = self.prompt.format(id=self.id,
-                                    profile=self.profile,
-                                    memory=dumps(self.memory),
-                                    view=dumps(self.view),
-                                    interact_with=self.interact_with.id if self.interact_with else "",
-                                    recent_memory=dumps(self.recent_memory),
                                     holdings=dumps([v.state for k, v in self.holdings.items()]),
                                     motivation=self.motivation,
                                     narrative=yamld(self.narrative))
@@ -341,9 +308,11 @@ class CharacterLLM(Character):
         self.log("\n".join([prompt, response]), "plan")
 
         response = json.loads(response.split("```json\n")[-1].split("\n```")[0])
+        plan = response.get("当前的计划", self.plan)
         decision = response["决策"]
 
-        return decision
+        self.plan = plan
+        self.decision += [decision]
 
 
 @dataclass

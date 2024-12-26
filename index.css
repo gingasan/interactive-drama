@@ -22,6 +22,11 @@
 .code-display.open {
     transform: translateX(0);
 }
+.code-display h3 {
+    margin: -10px 0 10px 0;
+    font-size: 15px;
+    text-align: left;
+}
 .toggle-code-display {
     font-family: "KaiTi", "STKaiti", serif;
     position: fixed;
