@@ -1,6 +1,6 @@
 # LLM-based Interactive Drama
 
-This is the official demonstration for our ACL 2024 paper ([From Role-Play to Drama-Interaction: An LLM Solution](https://aclanthology.org/2024.findings-acl.196.pdf)).
+This is the official demonstration for the ACL 2024 paper ([From Role-Play to Drama-Interaction: An LLM Solution](https://aclanthology.org/2024.findings-acl.196.pdf)).
 
 
 
