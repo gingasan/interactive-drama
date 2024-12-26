@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>LLM-based Interactive Drama</title>
+    <link rel="stylesheet" href="index.css">
+    <style>
+        body {
+            font-family: "KaiTi", "STKaiti", serif;
+        }
+        .phaser-text {
+            font-family: "KaiTi", "STKaiti", serif;
+        }
+        #gameContainer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.min.js"></script>
+</head>
+<body>
+
+    <div id="gameContainer"></div>
+
+    <button class="toggle-code-display" onclick="toggleCodeDisplay()">操作盘</button>
+    <div class="code-display">
+        <h3 id="scene-title">——</h3>
+        <select id="user-acts" class="user-input"></select>
+        <div id="user-target" class="user-input">交互对象...</div>
+        <input type="text" id="user-content" class="user-input" placeholder="请输入内容..." />
+        <select id="user-item" class="user-input"></select>
+        <button id="user-confirm">确认</button>
+        <div class="user-memory">
+            <h3>记忆</h3>
+            <div id="memory-content"></div>
+        </div>
+        <button id="user-next">去往下一个场景</button>
+        <button id="user-items">持有物</button>
+    </div>
+
+    <div class="items-display" style="display: none;">
+        <ul id="items-list"></ul>
+    </div>
+
+    <script>
+        function add_text(scene, x, y, text, font_size=14, font_color="#000") {
+            text = scene.add.text(x, y, text, {fontSize: `${font_size}px`, fill: font_color, fontFamily: "STKaiti"});
+            return text;
+        }
+
+        function toggleCodeDisplay() {
+            const codeDisplay = document.querySelector(".code-display");
+            codeDisplay.classList.toggle("open");
+        }
+
+        function updateMemory(memoryList) {
+            const memoryContent = document.getElementById("memory-content");
+            memoryContent.innerHTML = "";
+            memoryList.forEach(memory => {
+                const memoryParagraph = document.createElement("p");
+                memoryParagraph.textContent = memory;
+                memoryParagraph.style.margin = "0 0 5px 0";
+                memoryContent.appendChild(memoryParagraph);
+            });
+            memoryContent.scrollTop = memoryContent.scrollHeight;
+        }
+
+        function wrapChineseText(text, width, scene, font_size=13) {
+            let wrappedText = "";
+            let line = "";
+            const tempText = scene.add.text(0, 0, "", {
+                fontSize: `${font_size}px`,
+                fontFamily: "STKaiti"
+            });
+
+            for (let char of text) {
+                const testLine = line + char;
+                tempText.setText(testLine);
+                const textWidth = tempText.width;
+
+                if (textWidth > width && line !== "") {
+                    wrappedText += line + "\n";
+                    line = char;
+                } else {
+                    line = testLine;
+                }
+            }
+
+            wrappedText += line;
+            tempText.destroy();
+            return wrappedText;
+        }
+
+        function showDialogue(scene, char, text) {
+            const dialogueBox = scene.add.graphics();
+            dialogueBox.fillStyle(0xffffff, 0.8);
+            dialogueBox.lineStyle(1, 0x000000, 0.5);
+            
+            text = wrapChineseText(text, 180, scene);
+            const dialogueText = scene.add.text(0, 0, text, {
+                fontSize: "13px",
+                fill: "#000",
+                fontFamily: "STKaiti",
+                wordWrap: {width: 180}
+            });
+            dialogueText.setPosition(15, 10);
+
+            const boxHeight = dialogueText.getBounds().height + 20;
+            dialogueBox.fillRoundedRect(0, 0, 200, boxHeight, 5);
+            dialogueBox.strokeRoundedRect(0, 0, 200, boxHeight, 5);
+
+            const dialogueContainer = scene.add.container(char.x, char.y - 90);
+            dialogueContainer.add([dialogueBox, dialogueText]);
+
+            scene.time.delayedCall(6000, () => {
+                dialogueContainer.destroy();
+            });
+
+            return dialogueContainer;
+        }
+        
+        function toggleInputFields() {
+            const act = document.getElementById("user-acts").value;
+            const userContent = document.getElementById("user-content");
+            const userItem = document.getElementById("user-item");
+
+            userContent.style.display = "none";
+            userItem.style.display = "none";
+
+            if (act === "对话" || act === "尖叫") {
+                userContent.style.display = "block";
+                userItem.style.display = "none";
+            } else if (act === "给予") {
+                userContent.style.display = "none";
+                userItem.style.display = "block";
+                userItem.innerHTML = "";
+                state.player.holdings.forEach(item => {
+                    const newOption = document.createElement("option");
+                    newOption.text = item.id;
+                    newOption.value = item.id;
+                    userItem.add(newOption);
+                });
+            }
+        }
+        document.getElementById("user-acts").addEventListener("change", toggleInputFields);
+        document.getElementById("user-acts").addEventListener("click", toggleInputFields);
+        toggleInputFields();
+        toggleCodeDisplay();
+
+        function showMove(scene, char, start, end) {
+            scene.tweens.add({
+                targets: char,
+                x: end.x,
+                duration: Math.abs(end.x - start.x) * 2,
+                ease: "Linear",
+                onComplete: () => {
+                    scene.tweens.add({
+                        targets: char,
+                        y: end.y,
+                        duration: Math.abs(end.y - start.y) * 2,
+                        ease: "Linear"
+                    });
+                }
+            });
+        }
+
+        const config = {
+            type: Phaser.AUTO,
+            width: 800,
+            height: 610,
+            backgroundColor: "#d3d3d3",
+            parent: "gameContainer",
+            physics: {
+                default: "arcade",
+                arcade: {
+                    debug: false
+                }
+            },
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
+            }
+        };
+
+        const game = new Phaser.Game(config);
+        let cursors;
+        
+        let player;
+        let isBusy = false;
+        let characters = {};
+
+        let state;
+
+        function preload() {
+            this.load.image("kn", "assets/kn.png");
+            this.load.image("mlxwl", "assets/mlxwl.png");
+            this.load.image("mll", "assets/mll.png");
+            this.load.image("syxy", "assets/syxy.png");
+            this.load.image("mls", "assets/mls.png");
+            this.load.image("wsj", "assets/wsj.png");
+            this.load.image("lqjz", "assets/lqjz.png");
+            this.load.image("syyz", "assets/syyz.png");
+            this.load.image("zz", "assets/zz.png");
+            this.load.image("tileset_room", "assets/cuterpg/Room_Builder_32x32.png");
+            this.load.image("tileset_int1", "assets/cuterpg/Interiors_32x32_full_1.png");
+            this.load.image("tileset_int2", "assets/cuterpg/Interiors_32x32_full_2.png");
+            this.load.image("tileset_int3", "assets/cuterpg/Interiors_32x32_full_3.png");
+            this.load.image("tileset_int5", "assets/cuterpg/Interiors_32x32_full_5.png");
+            this.load.tilemapTiledJSON("tiled", "assets/tiled_lounge.json");
+        }
+
+        function create() {
+            // Create map
+            const map = this.make.tilemap({key: "tiled"});
+            const tileset_room = map.addTilesetImage("Room_Builder_32x32", "tileset_room");
+            const tileset_int1 = map.addTilesetImage("Interiors_32x32_full_1", "tileset_int1");
+            const tileset_int2 = map.addTilesetImage("Interiors_32x32_full_2", "tileset_int2");
+            const tileset_int3 = map.addTilesetImage("Interiors_32x32_full_3", "tileset_int3");
+            const tileset_int5 = map.addTilesetImage("Interiors_32x32_full_5", "tileset_int5");
+            const layer_main = map.createLayer("Indoor", [tileset_int2, tileset_room], 0, 0);
+            const layer_wall = map.createLayer("Wall", [tileset_room], 0, 0);
+            const layer_dec = map.createLayer("Decoration", [tileset_int1, tileset_int2, tileset_int3, tileset_int5], 0, 0);
+            layer_wall.setCollisionByProperty({collide: true});
+    
+            // Create NPCs, etc.
+            init(this);
+
+            // Create player
+            player = this.physics.add.sprite(327, 472, "kn").setScale(0.3);
+            player.id = "柯南";
+            player.id_2 = "kn";
+            this.physics.add.collider(player, layer_wall);
+
+            // Keyboard
+            cursors = this.input.keyboard.createCursorKeys();
+
+
+            document.getElementById("user-confirm").addEventListener("click", () => {
+                do_interact(this);
+                document.getElementById("user-content").value = "";
+            });
+
+            document.addEventListener("keydown", (event) => {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    document.getElementById("user-confirm").click();
+                    document.getElementById("user-content").value = "";
+                } else if (!isBusy && event.key === "Tab") {
+                    event.preventDefault();
+                    stay(this);
+                }
+            });
+
+            document.getElementById("user-next").addEventListener("click", () => {
+                next_scene(this);
+            });
+
+            const itemsDisplay = document.querySelector(".items-display");
+            const itemsList = document.getElementById("items-list");
+
+            document.getElementById("user-items").addEventListener("click", () => {
+                if (itemsDisplay.style.display === "none") {
+                    itemsDisplay.style.display = "flex";
+                    itemsList.innerHTML = "";
+                    state.player.holdings.forEach(item => {
+                        const itemContainer = document.createElement("li");
+                        itemContainer.classList.add("item-container");
+
+                        const itemName = document.createElement("h3");
+                        itemName.classList.add("item-name");
+                        itemName.textContent = item.id;
+
+                        const itemDescription = document.createElement("div");
+                        itemDescription.classList.add("item-description");
+                        itemDescription.textContent = item.description;
+
+                        itemContainer.appendChild(itemName);
+                        itemContainer.appendChild(itemDescription);
+                        itemsList.appendChild(itemContainer);
+                    });
+                } else {
+                    itemsDisplay.style.display = "none";
+                }
+            });
+
+        }
+
+        function update() {
+            if (isBusy) return;
+            const speed = 200;
+
+            player.setVelocity(0);
+            if (cursors.up.isDown) {
+                player.setVelocityY(-speed);
+            } else if (cursors.down.isDown) {
+                player.setVelocityY(speed);
+            } else if (cursors.left.isDown) {
+                player.setVelocityX(-speed);
+            } else if (cursors.right.isDown) {
+                player.setVelocityX(speed);
+            }
+
+            if (state) {
+                // Player memory
+                updateMemory(state.player.memory);
+                
+                // Dialogue bubbles
+                if (state.dialogues) {
+                    Object.keys(state.dialogues).forEach((char_id) => {
+                        showDialogue(this, characters[char_id], state.dialogues[char_id]);
+                    });
+                    delete state.dialogues;
+                }
+
+                // Moving in a simple style
+                if (state.move) {
+                    Object.keys(state.move).forEach((char_id) => {
+                        char = char_id == player.id ? player : characters[char_id];
+                        showMove(this, char, {x: state.move[char_id].start[0], y: state.move[char_id].start[1]}, {x: state.move[char_id].end[0], y: state.move[char_id].end[1]});
+                    });
+                    delete state.move;
+                }
+
+            }
+        }
+
+        function init(scene) {
+            fetch("http://127.0.0.1:5000/init")
+                .then(response => response.json())
+                .then(data => {
+                    for (const [char_id, char] of Object.entries(data.characters)) {
+                        if (char_id === "柯南") {
+                            continue;
+                        }
+                        let character = scene.add.sprite(char.loc[0], char.loc[1], char.id_2).setInteractive().setScale(0.3);
+                        character.id = char.id;
+                        character.id_2 = char.id_2;
+
+                        character.on("pointerdown", () => {
+                            if (!isBusy) start_interact(scene, character);
+                        });
+
+                        characters[char_id] = character;
+                    }
+                    state = data;
+                    document.getElementById("scene-title").textContent = state.scene;
+                });
+        }
+
+    function next_scene(scene) {
+        fetch("http://127.0.0.1:5000/next_scene")
+            .then(response => response.json())
+            .then(data => {
+                console.log("To Next Scene");
+                for (const [char_id, char] of Object.entries(characters)) {
+                    char.destroy();
+                }
+                for (const [char_id, char] of Object.entries(data.characters)) {
+                    if (char_id === "柯南") {
+                        continue;
+                    }
+                    let character = scene.add.sprite(char.loc[0], char.loc[1], char.id_2).setInteractive().setScale(0.3);
+                    character.id = char.id;
+                    character.id_2 = char.id_2;
+
+                    character.on("pointerdown", () => {
+                        if (!isBusy) start_interact(scene, character);
+                    });
+
+                    characters[char_id] = character;
+                }
+                state = data;
+                document.getElementById("scene-title").textContent = state.scene;
+            });
+    }
+
+    </script>
+    <script src="interact.js"></script>
+</body>
+</html>
