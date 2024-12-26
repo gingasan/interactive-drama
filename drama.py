@@ -286,7 +286,6 @@ class CharacterLLM(Character):
 
         self.query_fct = query_fct
 
-        # self.prompt_sys= read("prompt/prompt_character_sys.md")
         self.prompt = read("prompt/prompt_character_v2.md")
         self.cache_dir = "cache/"
 
@@ -371,51 +370,8 @@ class DramaLLM(Drama):
 
         self.query_fct = query_fct
 
-        self.prompt_sys = read("prompt/prompt_drama_sys.md")
         self.prompt_v1 = read("prompt/prompt_drama_v1.md")
-        self.prompt_v2_ins = read("prompt/prompt_drama_v2_ins.md")
-        self.prompt_v2_pre = read("prompt/prompt_drama_v2_pre.md")
         self.cache_dir = "cache/"
-
-    def v2_ins(self, nc=None, instructs=None):
-        if not nc and not instructs:
-            prompt_sys = self.prompt_sys.format(
-                npcs="\n\n".join(["\n".join([char_id, char.profile]) for char_id, char in self.characters.items() if char_id != self.player.id]),
-                player_id=self.player.id
-            )
-            prompt = self.prompt_v2_ins.format(
-                script=self.script.dump(),
-                nc=dumps(self.nc),
-                records=dumps(self.records),
-                instructs=dumps(self.instructs)
-            )
-
-            try:
-                response = self.query_fct([{"role": "system", "content": prompt_sys}, {"role": "user", "content": prompt}])
-                self.log("\n".join([prompt, response]), "v2_ins")
-
-                response = json.loads(response.split("```json\n")[-1].split("\n```")[0])
-            except SyntaxError:
-                response = self.query_fct([{"role": "system", "content": prompt_sys}, {"role": "user", "content": prompt}])
-                self.log("\n".join([prompt, response]), "v2_ins")
-
-                response = json.loads(response.split("```json\n")[-1].split("\n```")[0])
-            self.instructs = response["角色计划清单"]
-            self.nc = response["当前的情节链"]
-            if response["是否进入下一个场景"]:
-                self.ready_for_next_scene = True
-        else:
-            self.nc = nc
-            self.instructs = instructs
-        for char_id in self.characters:
-            if char_id not in self.instructs:
-                self.characters[char_id].motivation = None
-                continue
-            instruct = self.instructs[char_id]
-            motivation = []
-            for ins, ind in instruct:
-                motivation += [{ins: {"完成": False, "措辞": self.script.sample(ind)}}]
-            self.characters[char_id].motivation = motivation
 
     def v1(self):
         prompt = self.prompt_v1.format(
@@ -441,29 +397,6 @@ class DramaLLM(Drama):
 
         if all([t == True for _, t in self.nc]):
             self.ready_for_next_scene = True
-
-    def v2_pre(self, player_input):
-        prompt_sys = self.prompt_sys.format(
-            npcs="\n\n".join(["\n".join([char_id, char.profile]) for char_id, char in self.characters.items() if char_id != self.player.id]),
-            player_id=self.player.id
-        )
-        prompt = self.prompt_v2_pre.format(
-            script=self.script.dump(),
-            nc=dumps(self.nc),
-            records=dumps(self.records),
-            player_id=self.player.id,
-            player_act=player_input
-        )
-
-        response = self.query_fct([{"role": "system", "content": prompt_sys}, {"role": "user", "content": prompt}])
-        self.log("\n".join([prompt, response]), "v2_pre")
-
-        response = json.loads(response.split("```json\n")[-1].split("\n```")[0])
-
-        for char_id in self.characters:
-            self.characters[char_id].to_do = True if char_id == response["下一个行动人"] else False
-
-        return response.get("是否响应")
 
     def log(self, content, suffix):
         with open(os.path.join(self.cache_dir, "drama", suffix), "w") as f:

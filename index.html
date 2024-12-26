@@ -130,10 +130,10 @@
             userContent.style.display = "none";
             userItem.style.display = "none";
 
-            if (act === "对话" || act === "尖叫") {
+            if (act === "-speak") {
                 userContent.style.display = "block";
                 userItem.style.display = "none";
-            } else if (act === "给予") {
+            } else if (act === "-give") {
                 userContent.style.display = "none";
                 userItem.style.display = "block";
                 userItem.innerHTML = "";
@@ -190,9 +190,7 @@
         let cursors;
         
         let player;
-        let isBusy = false;
         let characters = {};
-
         let state;
 
         function preload() {
@@ -249,7 +247,7 @@
                     event.preventDefault();
                     document.getElementById("user-confirm").click();
                     document.getElementById("user-content").value = "";
-                } else if (!isBusy && event.key === "Tab") {
+                } else if (event.key === "Tab") {
                     event.preventDefault();
                     stay(this);
                 }
@@ -290,7 +288,6 @@
         }
 
         function update() {
-            if (isBusy) return;
             const speed = 200;
 
             player.setVelocity(0);
@@ -341,7 +338,7 @@
                         character.id_2 = char.id_2;
 
                         character.on("pointerdown", () => {
-                            if (!isBusy) start_interact(scene, character);
+                            start_interact(scene, character);
                         });
 
                         characters[char_id] = character;
@@ -368,7 +365,7 @@
                     character.id_2 = char.id_2;
 
                     character.on("pointerdown", () => {
-                        if (!isBusy) start_interact(scene, character);
+                        start_interact(scene, character);
                     });
 
                     characters[char_id] = character;

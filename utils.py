@@ -69,17 +69,8 @@ def dumps(content):
 def yamld(content):
     return yaml.dump(content, allow_unicode=True, indent=2, sort_keys=False)
 
-def dumplist(content):
-    repr = ""
-    for line in content:
-        if isinstance(line, list):
-            repr = "\n".join([repr, ", ".join(str(e) for e in line)])
-        else:
-            repr = "\n".join([repr, str(line)])
-    return repr.strip()
 
-
-KEY = ""
+KEY = read("openai_key.txt")
 
 def query_gpt4(prompt):
     client = OpenAI(api_key=KEY)

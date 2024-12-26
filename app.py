@@ -1,11 +1,6 @@
 from drama import *
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-import concurrent.futures
-
-
-with open("script.yaml") as file:
-    SCRIPT = yaml.safe_load(file)
 
 
 class ADramaLLM(DramaLLM):
@@ -31,20 +26,7 @@ class ADramaLLM(DramaLLM):
         self.add_character(YaZ, (200, 280))
         self.add_character(JiuX, (260, 290))
 
-        nc = [[plot, False] for plot in self.script.plots]
-        instructs = {
-            "柯南": [],
-            "毛利小五郎": [],
-            "毛利兰": [],
-            "雄一": [],
-            "莫里斯": [],
-            "均": [],
-            "纪子": [],
-            "雅子站员": [],
-            "久雄站长": []
-        }
-        self.v2_ins(nc=nc, instructs=instructs)
-
+        self.nc = [[plot, False] for plot in self.script.plots]
         self.calculate(aid="毛利小五郎", x="-speak", content="说起来真是太惊人了，没想到回东京这天会突然刮起台风。")
 
     def next_scene(self):
@@ -75,18 +57,9 @@ class ADramaLLM(DramaLLM):
             self.ready_for_next_scene = True
 
 
+with open("script.yaml") as file:
+    SCRIPT = yaml.safe_load(file)
 DRAMA = ADramaLLM("alpha", SCRIPT["narrative"])
-
-
-zh2en = {
-    "对话": "-speak",
-    "给予": "-give",
-    "等待": "-stay",
-    "离开": "-leave"
-}
-en2zh = {v: k for k, v in zh2en.items()}
-
-
 app = Flask(__name__)
 CORS(app)
 
@@ -98,8 +71,6 @@ def get_input(data):
     cid = data.get("cid")
     content = data.get("content")
     _loc = (data.get("loc_x"), data.get("loc_y"))
-    if x in zh2en:
-        x = zh2en[x]
 
     return aid, x, bid, cid, content, _loc
 
@@ -189,8 +160,6 @@ def get_ops():
         ops = DRAMA.player.ops
     else:
         return []
-    for i in range(len(ops)):
-        ops[i] = en2zh[ops[i]]
     return jsonify(ops)
 
 

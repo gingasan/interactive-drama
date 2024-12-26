@@ -35,7 +35,6 @@ function start_interact(scene, target) {
 }
 
 function do_interact(scene) {
-    isBusy = true;
     const button = document.getElementById("user-confirm");
     button.disabled = true;
 
@@ -55,7 +54,7 @@ function do_interact(scene) {
     };
     console.log(input_data)
 
-    if (act == "对话") {
+    if (act == "-speak") {
         showDialogue(scene, player, content);
     }
 
@@ -72,16 +71,13 @@ function do_interact(scene) {
 
     });
 
-    isBusy = false;
     button.disabled = false;
 }
 
 function stay(scene) {
-    isBusy = true;
-
     const input_data = {
         aid: player.id,
-        x: "等待",
+        x: "-stay",
         loc_x: player.x,
         loc_y: player.y
     };
@@ -96,8 +92,6 @@ function stay(scene) {
     .then(response => response.json())
     .then(data => {
         state = data;
-
     });
 
-    isBusy = false;
 }

@@ -10,10 +10,10 @@ This is the official repo for our ACL 2024 paper ([From Role-Play to Drama-Inter
 
 ![pv](assets/screen.png)
 
-1. Add your openai key in `utils.py`
+1. Add your openai key in `openai_key.txt`
 
-```python
-KEY = "..."
+```bash
+vi openai_key.txt
 ```
 
 2. Start the backend
