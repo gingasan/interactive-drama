@@ -55,6 +55,10 @@ There are some items in the drama. Press the "持有物" button to check.
 
 
 
+
+
+---
+
 In this demonstration, the DramaLLM is based on GPT-4o.
 
 There are only three scenes available now, also in Chinese, apologized. We are still working on the script.
