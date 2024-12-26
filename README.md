@@ -1,6 +1,6 @@
 # LLM-based Interactive Drama
 
-This is the official repo for our ACL 2024 paper ([From Role-Play to Drama-Interaction: An LLM Solution](https://aclanthology.org/2024.findings-acl.196.pdf)).
+This is the official demonstration for our ACL 2024 paper ([From Role-Play to Drama-Interaction: An LLM Solution](https://aclanthology.org/2024.findings-acl.196.pdf)).
 
 
 
@@ -32,6 +32,8 @@ python -m http.server 8000
 
 
 
+
+
 **To play**
 
 Every moment, you have two options.
@@ -39,15 +41,30 @@ Every moment, you have two options.
 * Stay and see other NPCs' reaction by pressing "Tab" on your keyboard.
 * Interact with other NPCs by clicking the avatar of him/her and input the content. Press "Enter" or "确认" to calculate the result based on your input. 
 
+**Move**
+
+Use ←, →, ↑, ↓.
+
 **To the next scene**
 
 Press the "去往下一个场景" button to jump to the next scene.
 
-**See your holdings**
+**Holdings**
 
-There are some items in the drama. Press the "道具" button to check.
+There are some items in the drama. Press the "持有物" button to check.
+
+
+
+In this demonstration, the DramaLLM is based on GPT-4o.
+
+There are only three scenes available now, also in Chinese, apologized. We are still working on the script.
+
+If you like our project, come join us!
 
 
 
 ## Todo
 
+1. Complete script
+2. Generalize to English
+3. General interface

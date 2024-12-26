@@ -52,8 +52,8 @@ class ADramaLLM(DramaLLM):
             self.characters["纪子"]._loc = (110, 350)
             self.characters["雅子站员"]._loc = (200, 280)
             self.characters["久雄站长"]._loc = (260, 290)
+            self.characters["毛利兰"]._loc = (110, 490)
             self.freeze("毛利小五郎")
-            self.freeze("毛利兰")
             self.ready_for_next_scene = True
 
 
