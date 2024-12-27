@@ -4,7 +4,7 @@ This is the official demonstration for the ACL 2024 paper ([From Role-Play to Dr
 
 
 
-## Demonstration
+### Demonstration
 
 《候车室里的7个人》 adapted from *Detective Conan*
 
@@ -31,11 +31,6 @@ python -m http.server 8000
 ```
 
 
-
-![pv](assets/profiles.png)
-
-
-
 **To play**
 
 Every moment, you have two options.
@@ -56,9 +51,6 @@ Press the "去往下一个场景" button to jump to the next scene.
 There are some items in the drama. Press the "持有物" button to check.
 
 
-
-
-
 ---
 
 In this demonstration, the DramaLLM is based on GPT-4o.
@@ -66,6 +58,23 @@ In this demonstration, the DramaLLM is based on GPT-4o.
 There are only three scenes available now, also in Chinese, apologized. We are still working on the script.
 
 If you like our project, come join us!
+
+
+### Drama Details
+
+**Characters**
+
+![pv](assets/profiles.png)
+
+**Script**
+
+Scene 1——候车室的7个人
+
+Scene 2——危险的预告
+
+Scene 3——有限调查
+
+There are two modes in the play. In Scene 1 and Scene 2, the narrative is scripted. The player can engage the roundtable discussion. In Scene 3, the play can explore the characters in person.
 
 
 
