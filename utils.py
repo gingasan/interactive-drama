@@ -5,7 +5,6 @@ import os
 from copy import deepcopy
 from openai import OpenAI
 from gradio_client import Client
-import concurrent.futures
 
 
 def rndsuf(k=3):
@@ -141,14 +140,6 @@ class DynamicScript:
         self.script = script
         self.scene_ids = get_keys(script)
         self.p = 0
-        # self._samples = {}
-        # for v in get_values(self.script[self.scene_ids[self.p]]["情节"]):
-        #     for li in v:
-        #         k, li = li.split("$")
-        #         if k in self._samples:
-        #             self._samples[k] += [li]
-        #         else:
-        #             self._samples[k] = [li]
 
     @property
     def plots(self):
@@ -172,10 +163,6 @@ class DynamicScript:
     
     def __getitem__(self, x):
         return self.script[self.scene_ids[self.p]][x]
-
-    def sample(self, x):
-        x = x.split("$")[0] if x else x
-        return self._samples.get(x, [])
 
     def dump(self, detail=False):
         if detail:

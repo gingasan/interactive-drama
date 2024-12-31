@@ -51,17 +51,14 @@ class Drama:
     def update_view(self, character_id):
         src = self.characters[character_id]
         view = {"items": {}, "characters": {}}
-        src.indist.clear()
         for _, char in self.characters.items():
             if char.id == character_id:
                 continue
             view["characters"].update({char.id: char.surface})
-            if self.get_distance(src._loc, char._loc) < 50:
-                src.indist += [char.id]
         src.update_view(view)
 
     def calculate(self, aid, x, bid=None, cid=None, **kwargs):
-        print(self.script.mode, " - ", aid, x, bid, cid)
+        print(self.script.mode, " - ", aid, x, bid, kwargs.get("content"))
         if x == "-stay":
             return
         if self.script.mode == "v1" or self.script.mode == "v2":
@@ -133,10 +130,6 @@ class Drama:
         m = {"aid": aid, "x": x, "bid": bid, "cid": cid, **kwargs}
         self.records.append(self.memory_to_text(m))
 
-    @staticmethod
-    def get_distance(loc1, loc2):
-        return math.sqrt((loc2[0] - loc1[0]) ** 2 + (loc2[1] - loc1[1]) ** 2)
-    
     def __repr__(self):
         return "{}".format(self.state)
     
@@ -183,7 +176,6 @@ class Character:
         self.interact_with = None
         self.to_do = None
         self.recent_memory = []
-        self.indist = []
 
         self.memory_to_text = memory_to_text
         self.observation_to_text = observation_to_text
@@ -271,7 +263,6 @@ class Character:
 class CharacterLLM(Character):
     def __init__(self, id=None, config={}, query_fct=query_gpt4):
         super().__init__(id, config)
-        self.promptx = config.get("promptx", "")
         self.motivation = None
         self.narrative = None
         self.plan = None
