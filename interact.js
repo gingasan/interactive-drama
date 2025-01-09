@@ -95,3 +95,39 @@ function stay(scene) {
     });
 
 }
+
+function auto_interact(scene) {
+    const button = document.getElementById("user-confirm");
+    button.disabled = true;
+
+    const input_data = {
+        aid: player.id,
+        loc_x: player.x,
+        loc_y: player.y
+    };
+
+    fetch("http://127.0.0.1:5000/auto")
+        .then(response => response.json())
+        .then(data => {
+            Object.assign(input_data, data);
+
+            if (input_data.act == "-speak") {
+                showDialogue(scene, player, content);
+            }
+            
+            return fetch("http://127.0.0.1:5000/calculate", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(input_data)
+            });
+    })
+    .then(response => response.json())
+    .then(data => {
+        state = data;
+
+    });
+
+    button.disabled = false;
+}

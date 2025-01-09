@@ -37,6 +37,7 @@ Every moment, you have two options.
 
 * Stay and see other NPCs' reaction by pressing "Tab" on your keyboard.
 * Interact with other NPCs by clicking the avatar of him/her and input the content. Press "Enter" or "确认" to calculate the result based on your input. 
+* **Use proxy** Update the personality of the proxy agent in `proxy.json` and press "Shift+Tab" to see what AI would do.
 
 **Move**
 

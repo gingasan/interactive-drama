@@ -38,6 +38,7 @@ class Drama:
         self.timestamp = 0
         self.records.clear()
         self.script.p = 0
+        self.records.append(self.script.scene_id)
 
     def add_character(self, char, loc, as_player=False):
         self.characters[char.id] = char
@@ -66,7 +67,7 @@ class Drama:
             src = self.characters[aid]
             for t in self.characters:
                 self.characters[t].new_memory(src.id, "-speak", None, content=kwargs["content"])
-            self.record(aid, x, None, cid, **kwargs)
+            self.new_record(aid, x, None, cid, **kwargs)
         elif self.script.mode == "ex":
             self._calculate(aid, x, bid, cid, **kwargs)
 
@@ -120,13 +121,14 @@ class Drama:
                 self.characters[bid].interact_with = src
                 src.interact(x, cid, **kwargs)
         else:
+            src.recent_memory.clear()
             src.interact_with = self.characters[bid]
             self.characters[bid].interact_with = src
             src.interact(x, cid, **kwargs)
 
-        self.record(aid, x, bid, cid, **kwargs)
+        self.new_record(aid, x, bid, cid, **kwargs)
 
-    def record(self, aid, x, bid, cid, **kwargs):
+    def new_record(self, aid, x, bid, cid, **kwargs):
         m = {"aid": aid, "x": x, "bid": bid, "cid": cid, **kwargs}
         self.records.append(self.memory_to_text(m))
 
@@ -152,6 +154,8 @@ class Drama:
             if k not in self.characters:
                 self.unfreeze(k)
             self.characters[k].motivation = v
+
+        self.records.append(self.script.scene_id)
 
 
 class Character:
@@ -290,7 +294,7 @@ class CharacterLLM(Character):
                                     memory=dumps(self.memory),
                                     view=dumps(self.view),
                                     interact_with=self.interact_with.id if self.interact_with else "",
-                                    recent_memory=dumps(self.recent_memory),
+                                    recent_memory=dumps(self.recent_memory) if self.interact_with else "",
                                     holdings=dumps([v.state for k, v in self.holdings.items()]),
                                     motivation=self.motivation,
                                     narrative=yamld(self.narrative))

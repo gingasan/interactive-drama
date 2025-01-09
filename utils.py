@@ -5,7 +5,11 @@ import os
 from copy import deepcopy
 from openai import OpenAI
 from gradio_client import Client
+from datetime import datetime
 
+
+def date():
+    return datetime.now().date()
 
 def rndsuf(k=3):
     return "".join(chr(random.randint(65, 90)) if random.randint(0, 1) else chr(random.randint(97, 122)) for _ in range(k))

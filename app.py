@@ -62,6 +62,7 @@ with open("script_zh.yaml") as file:
 DRAMA = ADramaLLM("alpha", SCRIPT["narrative"])
 app = Flask(__name__)
 CORS(app)
+PPROX = read("proxy.txt")
 
 
 def get_input(data):
@@ -106,7 +107,7 @@ def calculate():
 
         if not char.to_do:
             continue
-
+        
         decision = char.act()
         _, x, b, c, content, _ = get_input(decision)
 
@@ -132,7 +133,7 @@ def next_scene():
     state = {"move": {}, "dialogues": {}}
     loc = DRAMA.player._loc
     
-    DRAMA.next_scene()
+    DRAMA.next_scene() # For debug
     # if DRAMA.ready_for_next_scene:
     #     DRAMA.next_scene()
 
@@ -155,6 +156,65 @@ def get_ops():
     else:
         return []
     return jsonify(ops)
+
+
+class PlayerProxy:
+    def __init__(self, character, profile, query_fct=query_gpt4):
+        self.character = character
+        self.profile = profile
+        self.motivation = None
+        self.plan = None
+        self.decision = []
+
+        self.query_fct = query_fct
+
+        self.prompt = read("prompt/prompt_player.md")
+        self.cache_dir = "cache/"
+
+    def log(self, content, suffix):
+        with open(os.path.join(self.cache_dir, self.character.id, suffix), "w") as f:
+            f.write(content)
+
+    def act(self):
+        while not self.decision:
+            self.make_plan()        
+        next_act = self.decision.pop(0)
+
+        return next_act
+
+    def make_plan(self):
+        prompt = self.prompt.format(id=self.character.id,
+                                    profile=self.profile,
+                                    memory=dumps(self.character.memory),
+                                    view=dumps(self.character.view),
+                                    interact_with=self.character.interact_with.id if self.character.interact_with else "",
+                                    recent_memory=dumps(self.character.recent_memory) if self.character.interact_with else "",
+                                    holdings=dumps([v.state for k, v in self.character.holdings.items()]),
+                                    motivation=self.motivation)
+
+        response = self.query_fct([{"role": "user", "content": prompt}])
+        self.log("\n".join([prompt, response]), "plan")
+
+        response = json.loads(response.split("```json\n")[-1].split("\n```")[0])
+        plan = response.get("当前的计划", self.plan)
+        decision = response["决策"]
+
+        self.plan = plan
+        self.decision += [decision]
+
+
+@app.route("/auto")
+def auto():
+    DRAMA.update_view(DRAMA.player.id)
+    proxy = PlayerProxy(DRAMA.player, PPROX)
+    proxy.make_plan()
+    return jsonify(proxy.act())
+
+
+@app.route("/export_records")
+def export_records():
+    write_json(DRAMA.records, "records/%s-%s" % (date(), rndsuf()))
+    return jsonify(DRAMA.records)
 
 
 if __name__ == "__main__":
