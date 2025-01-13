@@ -39,6 +39,7 @@
         </div>
         <button id="user-next">去往下一个场景</button>
         <button id="user-items">持有物</button>
+        <button id="user-export">导出记录</button>
     </div>
 
     <div class="items-display" style="display: none;">
@@ -247,6 +248,9 @@
                     event.preventDefault();
                     document.getElementById("user-confirm").click();
                     document.getElementById("user-content").value = "";
+                } else if (event.key === "Tab" && event.shiftKey) {
+                    event.preventDefault();
+                    auto_interact(this);
                 } else if (event.key === "Tab") {
                     event.preventDefault();
                     stay(this);
@@ -255,6 +259,10 @@
 
             document.getElementById("user-next").addEventListener("click", () => {
                 next_scene(this);
+            });
+
+            document.getElementById("user-export").addEventListener("click", () => {
+                export_records(this);
             });
 
             const itemsDisplay = document.querySelector(".items-display");
@@ -348,32 +356,36 @@
                 });
         }
 
-    function next_scene(scene) {
-        fetch("http://127.0.0.1:5000/next_scene")
-            .then(response => response.json())
-            .then(data => {
-                console.log("To Next Scene");
-                for (const [char_id, char] of Object.entries(characters)) {
-                    char.destroy();
-                }
-                for (const [char_id, char] of Object.entries(data.characters)) {
-                    if (char_id === "柯南") {
-                        continue;
+        function next_scene(scene) {
+            fetch("http://127.0.0.1:5000/next_scene")
+                .then(response => response.json())
+                .then(data => {
+                    console.log("To Next Scene");
+                    for (const [char_id, char] of Object.entries(characters)) {
+                        char.destroy();
                     }
-                    let character = scene.add.sprite(char.loc[0], char.loc[1], char.id_2).setInteractive().setScale(0.3);
-                    character.id = char.id;
-                    character.id_2 = char.id_2;
+                    for (const [char_id, char] of Object.entries(data.characters)) {
+                        if (char_id === "柯南") {
+                            continue;
+                        }
+                        let character = scene.add.sprite(char.loc[0], char.loc[1], char.id_2).setInteractive().setScale(0.3);
+                        character.id = char.id;
+                        character.id_2 = char.id_2;
 
-                    character.on("pointerdown", () => {
-                        start_interact(scene, character);
-                    });
+                        character.on("pointerdown", () => {
+                            start_interact(scene, character);
+                        });
 
-                    characters[char_id] = character;
-                }
-                state = data;
-                document.getElementById("scene-title").textContent = state.scene;
-            });
-    }
+                        characters[char_id] = character;
+                    }
+                    state = data;
+                    document.getElementById("scene-title").textContent = state.scene;
+                });
+        }
+
+        function export_records(scene) {
+            fetch("http://127.0.0.1:5000/export_records");
+        }
 
     </script>
     <script src="interact.js"></script>

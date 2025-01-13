@@ -275,6 +275,7 @@ class CharacterLLM(Character):
         self.query_fct = query_fct
 
         self.prompt = read("prompt/prompt_character_v2.md")
+        self.prompt_woreplyd = read("prompt/prompt_character_v2_woreplyd.md")
         self.cache_dir = "cache/"
 
     def log(self, content, suffix):
@@ -289,15 +290,17 @@ class CharacterLLM(Character):
         return next_act
 
     def make_plan(self):
-        prompt = self.prompt.format(id=self.id,
-                                    profile=self.profile,
-                                    memory=dumps(self.memory),
-                                    view=dumps(self.view),
-                                    interact_with=self.interact_with.id if self.interact_with else "",
-                                    recent_memory=dumps(self.recent_memory) if self.interact_with else "",
-                                    holdings=dumps([v.state for k, v in self.holdings.items()]),
-                                    motivation=self.motivation,
-                                    narrative=yamld(self.narrative))
+        prompt = self.prompt_woreplyd.format(
+            id=self.id,
+            profile=self.profile,
+            memory=dumps(self.memory),
+            view=dumps(self.view),
+            interact_with=self.interact_with.id if self.interact_with else "",
+            recent_memory=dumps(self.recent_memory) if self.interact_with else "",
+            holdings=dumps([v.state for k, v in self.holdings.items()]),
+            motivation=self.motivation,
+            narrative=yamld(self.narrative)
+        )
 
         response = self.query_fct([{"role": "user", "content": prompt}])
         self.log("\n".join([prompt, response]), "plan")
@@ -335,10 +338,11 @@ class DramaLLM(Drama):
         self.query_fct = query_fct
 
         self.prompt_v1 = read("prompt/prompt_drama_v1.md")
+        self.prompt_v1_woreplyd = read("prompt/prompt_drama_v1_woreplyd.md")
         self.cache_dir = "cache/"
 
     def v1(self):
-        prompt = self.prompt_v1.format(
+        prompt = self.prompt_v1_woreplyd.format(
             npcs="\n\n".join(["\n".join([char_id, char.profile.strip()]) for char_id, char in self.characters.items() if char_id != self.player.id]),
             player_id=self.player.id,
             script=self.script.dump(),

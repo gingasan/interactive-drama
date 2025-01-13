@@ -36,13 +36,13 @@ class ADramaLLM(DramaLLM):
         if self.script.scene_id == "场景2":
             self.characters["柯南"]._loc = (590, 350)
             self.characters["毛利小五郎"]._loc = (600, 390)
-            self.characters["毛利兰"]._loc = (650, 250)
             self.characters["雄一"]._loc = (670, 390)
             self.characters["莫里斯"]._loc = (660, 350)
             self.freeze("均")
             self.freeze("纪子")
             self.freeze("雅子站员")
             self.freeze("久雄站长")
+            self.freeze("毛利兰")
         elif self.script.scene_id == "场景3":
             self.characters["柯南"]._loc = (290, 370)
             self.characters["柯南"].into_hold(Item(id="神秘的字条", description="一张神秘的字条，字迹潦草——毛利先生，今晚将有人在这里被杀，凶手是——看上去写字条的人很匆忙，没来得及写完。"))
@@ -190,7 +190,8 @@ class PlayerProxy:
                                     interact_with=self.character.interact_with.id if self.character.interact_with else "",
                                     recent_memory=dumps(self.character.recent_memory) if self.character.interact_with else "",
                                     holdings=dumps([v.state for k, v in self.character.holdings.items()]),
-                                    motivation=self.motivation)
+                                    motivation=self.motivation,
+                                    mode="探索" if DRAMA.script.mode == "ex" else "圆桌")
 
         response = self.query_fct([{"role": "user", "content": prompt}])
         self.log("\n".join([prompt, response]), "plan")
