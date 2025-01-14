@@ -1,4 +1,3 @@
-import math
 from dataclasses import dataclass
 from utils import *
 
@@ -73,29 +72,7 @@ class Drama:
 
     def _calculate(self, aid, x, bid=None, cid=None, **kwargs):
         src = self.characters[aid]
-        if x == "-move":
-            if bid in self.characters:
-                ax = self.characters[bid]._loc[0]
-                ay = self.characters[bid]._loc[1]
-                ax += rndc([-20, -10, 10, 20])
-                ay += rndc([-20, -10, 10, 20])
-            elif bid in self.scenes:
-                ax = self.scenes[bid].center[0]
-                ay = self.scenes[bid].center[1]
-                ax += rndc([-5, 0, 5])
-                ay += rndc([-5, 0, 5])
-            src._loc = (ax, ay)
-            src.new_memory(src.id, "-move", bid)
-            src.to_do = True
-            if src.interact_with:
-                trg = src.interact_with
-                trg.new_memory(src.id, "-leave", src.interact_with.id)
-                trg.interact_with = None
-                trg.to_do = None
-                src.interact_with = None
-                trg.recent_memory.clear()
-                src.recent_memory.clear()
-        elif x == "-leave":
+        if x == "-leave":
             trg = src.interact_with
             trg.new_memory(src.id, "-leave", src.interact_with.id)
             src.new_memory(src.id, "-leave", src.interact_with.id)
@@ -122,6 +99,7 @@ class Drama:
                 src.interact(x, cid, **kwargs)
         else:
             src.recent_memory.clear()
+            self.characters[bid].recent_memory.clear()
             src.interact_with = self.characters[bid]
             self.characters[bid].interact_with = src
             src.interact(x, cid, **kwargs)
@@ -290,7 +268,7 @@ class CharacterLLM(Character):
         return next_act
 
     def make_plan(self):
-        prompt = self.prompt_woreplyd.format(
+        prompt = self.prompt.format(
             id=self.id,
             profile=self.profile,
             memory=dumps(self.memory),
@@ -342,14 +320,14 @@ class DramaLLM(Drama):
         self.cache_dir = "cache/"
 
     def v1(self):
-        prompt = self.prompt_v1_woreplyd.format(
+        prompt = self.prompt_v1.format(
             npcs="\n\n".join(["\n".join([char_id, char.profile.strip()]) for char_id, char in self.characters.items() if char_id != self.player.id]),
             player_id=self.player.id,
             script=self.script.dump(),
             scene_id=self.script.scene_id,
             narrative=dumps(self.nc),
             records="\n".join([line for line in self.records]),
-            recent=dumps(self.records[-3:])
+            recent=dumps(self.records[-2:])
         )
 
         response = self.query_fct([{"role": "user", "content": prompt}])
