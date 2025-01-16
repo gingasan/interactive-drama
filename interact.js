@@ -96,38 +96,75 @@ function stay(scene) {
 
 }
 
-function auto_interact(scene) {
+// function auto_interact(scene) {
+//     const button = document.getElementById("user-confirm");
+//     button.disabled = true;
+
+//     const input_data = {
+//         aid: player.id,
+//         loc_x: player.x,
+//         loc_y: player.y
+//     };
+
+//     fetch("http://127.0.0.1:5000/auto")
+//         .then(response => response.json())
+//         .then(data => {
+//             Object.assign(input_data, data);
+
+//             if (input_data.x == "-speak") {
+//                 showDialogue(scene, player, input_data.content);
+//             }
+            
+//             return fetch("http://127.0.0.1:5000/calculate", {
+//                 method: "POST",
+//                 headers: {
+//                     "Content-Type": "application/json"
+//                 },
+//                 body: JSON.stringify(input_data)
+//             });
+//     })
+//     .then(response => response.json())
+//     .then(data => {
+//         state = data;
+
+//     });
+
+//     button.disabled = false;
+// }
+async function auto_interact(scene) {
     const button = document.getElementById("user-confirm");
     button.disabled = true;
 
-    const input_data = {
-        aid: player.id,
-        loc_x: player.x,
-        loc_y: player.y
-    };
+    const n = parseInt(document.getElementById("n-proxy").value);
+    for (let i = 0; i < n; i++) {
+        console.log(i + 1);
+        const input_data = {
+            aid: player.id,
+            loc_x: player.x,
+            loc_y: player.y
+        };
 
-    fetch("http://127.0.0.1:5000/auto")
-        .then(response => response.json())
-        .then(data => {
-            Object.assign(input_data, data);
+        const autoResponse = await fetch("http://127.0.0.1:5000/auto");
+        const autoData = await autoResponse.json();
+        Object.assign(input_data, autoData);
 
-            if (input_data.act == "-speak") {
-                showDialogue(scene, player, content);
-            }
-            
-            return fetch("http://127.0.0.1:5000/calculate", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(input_data)
-            });
-    })
-    .then(response => response.json())
-    .then(data => {
-        state = data;
+        // Show dialogue if needed
+        if (input_data.x == "-speak") {
+            showDialogue(scene, player, input_data.content);
+        }
 
-    });
+        const calculateResponse = await fetch("http://127.0.0.1:5000/calculate", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(input_data)
+        });
+
+        const calculateData = await calculateResponse.json();
+        state = calculateData;
+
+    }
 
     button.disabled = false;
 }

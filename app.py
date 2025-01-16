@@ -93,6 +93,9 @@ def calculate():
     if DRAMA.script.mode == "v1":
         DRAMA.calculate(aid=aid, x=x, bid=bid, cid=cid, content=content)
         DRAMA.v1()
+    elif DRAMA.script.mode == "v2":
+        DRAMA.calculate(aid=aid, x=x, bid=bid, cid=cid, content=content)
+        DRAMA.v2()
     elif DRAMA.script.mode == "ex":
         DRAMA.calculate(aid=aid, x=x, bid=bid, cid=cid, content=content)
 
@@ -107,7 +110,7 @@ def calculate():
 
         if not char.to_do:
             continue
-        
+
         decision = char.act()
         _, x, b, c, content, _ = get_input(decision)
 

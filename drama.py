@@ -252,8 +252,9 @@ class CharacterLLM(Character):
 
         self.query_fct = query_fct
 
-        self.prompt = read("prompt/prompt_character_v2.md")
-        self.prompt_woreplyd = read("prompt/prompt_character_v2_woreplyd.md")
+        self.prompt = read("prompt/prompt_character.md")
+        self.prompt_woreplyd = read("prompt/prompt_character_woreplyd.md")
+        self.prompt_v2 = read("prompt/prompt_character_v2.md")
         self.cache_dir = "cache/"
 
     def log(self, content, suffix):
@@ -278,6 +279,28 @@ class CharacterLLM(Character):
             holdings=dumps([v.state for k, v in self.holdings.items()]),
             motivation=self.motivation,
             narrative=yamld(self.narrative)
+        )
+
+        response = self.query_fct([{"role": "user", "content": prompt}])
+        self.log("\n".join([prompt, response]), "plan")
+
+        response = json.loads(response.split("```json\n")[-1].split("\n```")[0])
+        plan = response.get("当前的计划", self.plan)
+        decision = response["决策"]
+
+        self.plan = plan
+        self.decision += [decision]
+
+    def v2(self):
+        prompt = self.prompt_v2.format(
+            id=self.id,
+            profile=self.profile,
+            memory=dumps(self.memory),
+            view=dumps(self.view),
+            holdings=dumps([v.state for k, v in self.holdings.items()]),
+            motivation=self.motivation,
+            narrative=yamld(self.narrative),
+            recent=dumps(self.memory[-2:])
         )
 
         response = self.query_fct([{"role": "user", "content": prompt}])
@@ -317,6 +340,7 @@ class DramaLLM(Drama):
 
         self.prompt_v1 = read("prompt/prompt_drama_v1.md")
         self.prompt_v1_woreplyd = read("prompt/prompt_drama_v1_woreplyd.md")
+        self.prompt_v2 = read("prompt/prompt_drama_v2.md")
         self.cache_dir = "cache/"
 
     def v1(self):
@@ -337,9 +361,9 @@ class DramaLLM(Drama):
 
         self.nc = response["当前的情节链"]
         decision = response["决策"]
-        self.characters.get(decision["aid"]).decision.append(decision)
         for char_id in self.characters:
             self.characters[char_id].to_do = True if char_id == decision["aid"] else False
+        self.characters.get(decision["aid"]).decision.append(decision)
 
         if all([t == True for _, t in self.nc]):
             self.ready_for_next_scene = True
@@ -347,3 +371,31 @@ class DramaLLM(Drama):
     def log(self, content, suffix):
         with open(os.path.join(self.cache_dir, "drama", suffix), "w") as f:
             f.write(content)
+
+    def v2(self):
+        prompt = self.prompt_v2.format(
+            npcs="\n\n".join(["\n".join([char_id, char.profile.strip()]) for char_id, char in self.characters.items() if char_id != self.player.id]),
+            player_id=self.player.id,
+            script=self.script.dump(),
+            scene_id=self.script.scene_id,
+            narrative=dumps(self.nc),
+            records="\n".join([line for line in self.records]),
+            recent=dumps(self.records[-2:])
+        )
+
+        response = self.query_fct([{"role": "user", "content": prompt}])
+        self.log("\n".join([prompt, response]), "v2")
+
+        response = json.loads(response.split("```json\n")[-1].split("\n```")[0])
+
+        self.nc = response["当前的情节链"]
+        for char_id in self.characters:
+            if char_id == response["下一个行动人"]:
+                self.characters[char_id].to_do = True
+                self.characters[char_id].motivation = response["行动人的指令"]
+                self.characters[char_id].v2()
+            else:
+                self.characters[char_id].to_do = False
+
+        if all([t == True for _, t in self.nc]):
+            self.ready_for_next_scene = True
