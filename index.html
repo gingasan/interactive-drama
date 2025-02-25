@@ -27,7 +27,7 @@
 
     <button class="toggle-code-display" onclick="toggleCodeDisplay()">操作盘</button>
     <div class="code-display">
-        <h3 id="scene-title">——</h3>
+        <!-- <h3 id="scene-title">——</h3> -->
         <select id="user-acts" class="user-input"></select>
         <div id="user-target" class="user-input">交互对象...</div>
         <input type="text" id="user-content" class="user-input" placeholder="请输入内容..." />
@@ -40,11 +40,16 @@
         <button id="user-next">去往下一个场景</button>
         <button id="user-items">持有物</button>
         <button id="user-export">导出记录</button>
-        <input type="number" id="n-proxy" class="user-input" value="10"/>
+        <!-- <input type="number" id="n-proxy" class="user-input" value="10"/> -->
     </div>
 
     <div class="items-display" style="display: none;">
         <ul id="items-list"></ul>
+    </div>
+
+    <div class="scene-display">
+        <h3 id="scene-title">场景一</h3>
+        <h3 id="scene-description"></h3>
     </div>
 
     <script>
@@ -210,6 +215,7 @@
             this.load.image("tileset_int2", "assets/cuterpg/Interiors_32x32_full_2.png");
             this.load.image("tileset_int3", "assets/cuterpg/Interiors_32x32_full_3.png");
             this.load.image("tileset_int5", "assets/cuterpg/Interiors_32x32_full_5.png");
+            this.load.image("tileset_field", "assets/cuterpg/CuteRPG_Field_B.png");
             this.load.tilemapTiledJSON("tiled", "assets/tiled_lounge.json");
         }
 
@@ -221,9 +227,10 @@
             const tileset_int2 = map.addTilesetImage("Interiors_32x32_full_2", "tileset_int2");
             const tileset_int3 = map.addTilesetImage("Interiors_32x32_full_3", "tileset_int3");
             const tileset_int5 = map.addTilesetImage("Interiors_32x32_full_5", "tileset_int5");
+            const tileset_field = map.addTilesetImage("CuteRPG_Field_B", "tileset_field");
             const layer_main = map.createLayer("Indoor", [tileset_int2, tileset_room], 0, 0);
             const layer_wall = map.createLayer("Wall", [tileset_room], 0, 0);
-            const layer_dec = map.createLayer("Decoration", [tileset_int1, tileset_int2, tileset_int3, tileset_int5], 0, 0);
+            const layer_dec = map.createLayer("Decoration", [tileset_int1, tileset_int2, tileset_int3, tileset_int5, tileset_field], 0, 0);
             layer_wall.setCollisionByProperty({collide: true});
     
             // Create NPCs, etc.
@@ -289,8 +296,10 @@
                         itemContainer.appendChild(itemDescription);
                         itemsList.appendChild(itemContainer);
                     });
+                    document.querySelector(".scene-display").style.display = "none";
                 } else {
                     itemsDisplay.style.display = "none";
+                    document.querySelector(".scene-display").style.display = "flex";
                 }
             });
 
@@ -354,6 +363,7 @@
                     }
                     state = data;
                     document.getElementById("scene-title").textContent = state.scene;
+                    document.getElementById("scene-description").textContent = state.scene_description;
                 });
         }
 
@@ -381,6 +391,7 @@
                     }
                     state = data;
                     document.getElementById("scene-title").textContent = state.scene;
+                    document.getElementById("scene-description").textContent = state.scene_description;
                 });
         }
 

@@ -191,3 +191,15 @@
     font-family: "KaiTi", "STKaiti", serif;
     justify-content: center;
 }
+
+.scene-display {
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 73%;
+    height: 100px;
+    padding: 20px;
+    z-index: 1000;
+    overflow-x: auto;
+}

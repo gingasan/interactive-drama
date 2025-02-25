@@ -147,23 +147,25 @@ class DynamicScript:
 
     @property
     def plots(self):
-        return get_keys(self.script[self.scene_ids[self.p]]["情节"])
-    
-    @property
-    def characters(self):
-        return self.script[self.scene_ids[self.p]]["人物"]
-    
-    @property
-    def mode(self):
-        return self.script[self.scene_ids[self.p]]["模式"]
+        if self.mode == "ex":
+            return self.script[self.scene_ids[self.p]]["plots"]
+        return get_keys(self.script[self.scene_ids[self.p]]["plots"])
 
     @property
-    def scene_id(self):
-        return self.scene_ids[self.p]
+    def characters(self):
+        return self.script[self.scene_ids[self.p]]["characters"]
 
     @property
     def location(self):
-        return self.script[self.scene_ids[self.p]]["地点"]
+        return self.script[self.scene_ids[self.p]]["location"]
+    
+    @property
+    def scene_id(self):
+        return self.scene_ids[self.p]
+    
+    @property
+    def mode(self):
+        return self.script[self.scene_ids[self.p]]["mode"]
     
     def __getitem__(self, x):
         return self.script[self.scene_ids[self.p]][x]
@@ -175,7 +177,7 @@ class DynamicScript:
         for scene_id, v in tmp_script.items():
             if scene_id == self.scene_ids[self.p]:
                 continue
-            v["情节"] = get_keys(v["情节"]) if "情节" in v else None
-            v["人物"] = None
-            v["模式"] = None
+            v["plots"] = get_keys(v["plots"]) if "plots" in v else None
+            v["characters"] = None
+            v["mode"] = None
         return yaml.safe_dump(tmp_script, allow_unicode=True, indent=2, sort_keys=False)
