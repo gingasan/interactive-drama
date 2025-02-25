@@ -9,14 +9,22 @@ class ADramaLLM(DramaLLM):
         super().reset()
 
         KeN = Character("柯南", {"id_2": "kn", "profile": SCRIPT["character"]["柯南"]})
-        XiaoWL = CharacterLLM("毛利小五郎", {"id_2": "mlxwl", "profile": SCRIPT["character"]["毛利小五郎"]})
-        Lan = CharacterLLM("毛利兰", {"id_2": "mll", "profile": SCRIPT["character"]["毛利兰"]})
-        XiongY = CharacterLLM("雄一", {"id_2": "syxy", "profile": SCRIPT["character"]["雄一"]})
-        MoLS = CharacterLLM("莫里斯", {"id_2": "mls", "profile": SCRIPT["character"]["莫里斯"]})
-        Jun = CharacterLLM("均", {"id_2": "wsj", "profile": SCRIPT["character"]["均"]})
-        JiZ = CharacterLLM("纪子", {"id_2": "lqjz", "profile": SCRIPT["character"]["纪子"]})
-        YaZ = CharacterLLM("雅子站员", {"id_2": "syyz", "profile": SCRIPT["character"]["雅子站员"]})
-        JiuX = CharacterLLM("久雄站长", {"id_2": "zz", "profile": SCRIPT["character"]["久雄站长"]})
+        XiaoWL = CharacterLLM(
+            "毛利小五郎", {"id_2": "mlxwl", "profile": SCRIPT["character"]["毛利小五郎"]})
+        Lan = CharacterLLM(
+            "毛利兰", {"id_2": "mll", "profile": SCRIPT["character"]["毛利兰"]})
+        XiongY = CharacterLLM(
+            "雄一", {"id_2": "syxy", "profile": SCRIPT["character"]["雄一"]})
+        MoLS = CharacterLLM(
+            "莫里斯", {"id_2": "mls", "profile": SCRIPT["character"]["莫里斯"]})
+        Jun = CharacterLLM(
+            "均", {"id_2": "wsj", "profile": SCRIPT["character"]["均"]})
+        JiZ = CharacterLLM(
+            "纪子", {"id_2": "lqjz", "profile": SCRIPT["character"]["纪子"]})
+        YaZ = CharacterLLM(
+            "雅子站员", {"id_2": "syyz", "profile": SCRIPT["character"]["雅子站员"]})
+        JiuX = CharacterLLM(
+            "久雄站长", {"id_2": "zz", "profile": SCRIPT["character"]["久雄站长"]})
         self.add_character(KeN, (307, 472), as_player=True)
         self.add_character(XiaoWL, (250, 420))
         self.add_character(Lan, (300, 420))
@@ -27,13 +35,13 @@ class ADramaLLM(DramaLLM):
         self.add_character(YaZ, (200, 280))
         self.add_character(JiuX, (260, 290))
 
-        self.nc = [[plot, False] for plot in self.script.plots]
+        self.plot_chain = [[plot, False] for plot in self.script.plots]
         self.calculate(aid="毛利小五郎", x="-speak", content="说起来真是太惊人了，没想到回东京这天会突然刮起台风。")
 
     def next_scene(self):
         super().next_scene()
 
-        self.nc = [[plot, False] for plot in self.script.plots] if self.script.plots else None
+        self.plot_chain = [[plot, False] for plot in self.script.plots] if self.script.plots else None
 
         if self.script.scene_id == "场景2":
             self.characters["柯南"]._loc = (590, 350)
@@ -57,7 +65,7 @@ class ADramaLLM(DramaLLM):
             self.characters["久雄站长"]._loc = (350, 330)
             self.characters["毛利兰"]._loc = (110, 490)
             self.freeze("毛利小五郎")
-            # self.ready_for_next_scene = True
+            self.ready_for_next_scene = True
 
 
 with open("script_zh.yaml") as file:
@@ -100,13 +108,12 @@ def calculate():
     t1 = time.time()
     if DRAMA.script.mode == "v1":
         DRAMA.calculate(aid=aid, x=x, bid=bid, cid=cid, content=content)
-        if reflect:
-            DRAMA.reflect()
         DRAMA.v1()
     elif DRAMA.script.mode == "ex":
         DRAMA.calculate(aid=aid, x=x, bid=bid, cid=cid, content=content)
-        if reflect:
-            DRAMA.reflect()
+
+    if reflect:
+        DRAMA.reflect()
 
     state = {"move": {}, "dialogues": {}}
     for char_id, char in DRAMA.characters.items():

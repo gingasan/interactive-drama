@@ -59,7 +59,7 @@ class Drama:
         src.update_view(view)
 
     def calculate(self, aid, x, bid=None, cid=None, **kwargs):
-        print(self.script.mode, " - ", aid, x, bid, kwargs.get("content"))
+        print("**", self.script.mode, aid, x, bid, kwargs.get("content"), "**")
         if x == "-stay":
             return
         if self.script.mode == "ex":
@@ -252,13 +252,12 @@ class CharacterLLM(Character):
     def __init__(self, id=None, config={}, query_fct=query_gpt4):
         super().__init__(id, config)
         self.motivation = None
-        self.plot = None
+        self.plot_chain = None
         self.decision = []
 
         self.query_fct = query_fct
 
-        self.prompt = read("prompt/prompt_character_reflect.md")
-        self.prompt_v2 = read("prompt/prompt_character_v2.md")
+        self.prompt = read("prompt/prompt_actor.md")
         self.cache_dir = "cache/"
 
     def log(self, content, suffix):
@@ -281,7 +280,7 @@ class CharacterLLM(Character):
             holdings=dumps([v.state for k, v in self.holdings.items()]),
             recent_memory=dumps(self.recent_memory) if self.interact_with else "",
             motivation=self.motivation,
-            plot=dumps(self.plot),
+            plot=dumps(self.plot_chain),
             recent=dumps(self.memory[-2:])
         )
 
@@ -297,28 +296,6 @@ class CharacterLLM(Character):
             self.new_memory(text=self.motivation.strip())
         self.motivation = motivation
         self.plot = plot
-        self.decision += [decision]
-
-    def v2(self):
-        prompt = self.prompt_v2.format(
-            id=self.id,
-            profile=self.profile,
-            memory=dumps(self.memory),
-            view=dumps(self.view),
-            holdings=dumps([v.state for k, v in self.holdings.items()]),
-            motivation=self.motivation,
-            narrative=yamld(self.plot),
-            recent=dumps(self.memory[-2:])
-        )
-
-        response = self.query_fct([{"role": "user", "content": prompt}])
-        self.log("\n".join([prompt, response]), "plan")
-
-        response = json.loads(response.split("```json\n")[-1].split("\n```")[0])
-        # plan = response.get("当前的计划", self.plan)
-        decision = response["决策"]
-
-        # self.plan = plan
         self.decision += [decision]
 
 
@@ -340,7 +317,7 @@ class Item:
 class DramaLLM(Drama):
     def __init__(self, id, script, query_fct=query_gpt4):
         super().__init__(id, script)
-        self.nc = {}
+        self.plot_chain = {}
         self.instructs = {}
         self.reset()
 
@@ -348,6 +325,7 @@ class DramaLLM(Drama):
 
         self.prompt_v1 = read("prompt/prompt_drama_v1.md")
         self.prompt_v1_reflect = read("prompt/prompt_drama_v1_reflect.md")
+        self.prompt_director_reflect = read("prompt/prompt_director_reflect.md")
         self.cache_dir = "cache/"
 
     def v1(self):
@@ -356,7 +334,7 @@ class DramaLLM(Drama):
             player_id=self.player.id,
             script=self.script.dump(),
             scene_id=self.script.scene_id,
-            narrative=dumps(self.nc),
+            plot_chain=dumps(self.plot_chain),
             records="\n".join([line for line in self.records]),
             recent=dumps(self.records[-2:])
         )
@@ -366,24 +344,24 @@ class DramaLLM(Drama):
 
         response = json.loads(response.split("```json\n")[-1].split("\n```")[0])
 
-        self.nc = response["当前的情节链"]
+        self.plot_chain = response["当前的情节链"]
         decision = response["决策"]
         for char_id in self.characters:
             self.characters[char_id].to_do = True if char_id == decision["aid"] else False
         self.characters.get(decision["aid"]).decision.append(decision)
 
-        if all([t == True for _, t in self.nc]):
+        if all([t == True for _, t in self.plot_chain]):
             self.ready_for_next_scene = True
 
-    def reflect(self):
-        print("****************** Plot-based Reflection ******************")
+    def reflect_v1(self):
         prompt = self.prompt_v1_reflect.format(
             npcs="\n\n".join(["\n".join([char_id, char.profile.strip()]) for char_id, char in self.characters.items() if char_id != self.player.id]),
             player_id=self.player.id,
             script=self.script.dump(),
             scene_id=self.script.scene_id,
-            narrative=dumps(self.nc),
-            records="\n".join([line for line in self.records])
+            plot_chain=dumps(self.plot_chain),
+            records="\n".join([line for line in self.records]),
+            recent=dumps(self.records[-2:])
         )
 
         response = self.query_fct([{"role": "user", "content": prompt}])
@@ -392,7 +370,38 @@ class DramaLLM(Drama):
         response = json.loads(response.split("```json\n")[-1].split("\n```")[0])
 
         if response["反思后的情节链"]:
-            self.nc = response["反思后的情节链"]
+            self.plot_chain = response["反思后的情节链"]
+
+    def reflect(self):
+        print("****************** Plot-based Reflection ******************")
+        if self.script.mode == "v1":
+            return self.reflect_v1()
+        
+        target = None
+        plot_chain = None
+        for char_id in self.characters:
+            if self.characters[char_id].to_do:
+                plot_chain = self.characters[char_id].plot_chain
+                target = char_id
+                break
+
+        prompt = self.prompt_director_reflect.format(
+            npcs="\n\n".join(["\n".join([char_id, char.profile.strip()]) for char_id, char in self.characters.items() if char_id != self.player.id]),
+            player_id=self.player.id,
+            script=self.script.dump(),
+            scene_id=self.script.scene_id,
+            plot_chain=dumps(plot_chain),
+            records="\n".join([line for line in self.records]),
+            recent=dumps(self.records[-2:])
+        )
+
+        response = self.query_fct([{"role": "user", "content": prompt}])
+        self.log("\n".join([prompt, response]), "reflect")
+
+        response = json.loads(response.split("```json\n")[-1].split("\n```")[0])
+
+        if response["反思后的情节链"]:
+            self.characters[target].plot_chain = response["反思后的情节链"]
 
     def log(self, content, suffix):
         with open(os.path.join(self.cache_dir, "drama", suffix), "w") as f:
