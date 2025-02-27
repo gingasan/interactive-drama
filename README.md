@@ -1,6 +1,8 @@
 # LLM-based Interactive Drama
 
-This is the official demonstration for the ACL 2024 paper ([From Role-Play to Drama-Interaction: An LLM Solution](https://aclanthology.org/2024.findings-acl.196.pdf)).
+This is the Chinese demonstration for the ACL 2024 paper ([From Role-Play to Drama-Interaction: An LLM Solution](https://aclanthology.org/2024.findings-acl.196.pdf)).
+
+Our secondary work discusses the immersion-agency paradigm of a nice interactive experience ([Towards Enhanced Immersion and Agency for LLM-based Interactive Drama](https://arxiv.org/pdf/2502.17878)).
 
 
 
@@ -8,7 +10,7 @@ This is the official demonstration for the ACL 2024 paper ([From Role-Play to Dr
 
 《候车室里的7个人》 adapted from *Detective Conan*
 
-The player will play as *Conan*.
+The player will play the role of *Conan*.
 
 ![pv](assets/screen.png)
 
@@ -37,7 +39,6 @@ Every moment, you have two options.
 
 * Stay and see other NPCs' reaction by pressing "Tab" on your keyboard.
 * Interact with other NPCs by clicking the avatar of him/her and input the content. Press "Enter" or "确认" to calculate the result based on your input. 
-* **Use proxy** Update the personality of the proxy agent in `proxy.json` and press "Shift+Tab" to see what AI would do.
 
 **Move**
 
@@ -54,7 +55,7 @@ There are some items in the drama. Press the "持有物" button to check.
 
 ---
 
-In this demonstration, the DramaLLM is based on GPT-4o.
+In this demonstration, each role agents is based on GPT-4o.
 
 There are only three scenes available now, also in Chinese, apologized. We are still working on the script.
 
@@ -75,12 +76,11 @@ Scene 2——危险的预告
 
 Scene 3——有限调查
 
-There are two modes in the play. In Scene 1 and Scene 2, the narrative is scripted. The player can engage the roundtable discussion. In Scene 3, the play can explore the characters in person.
+There are two modes in the drama. In Scene 1 and Scene 2, the narrative is scripted. The player can engage the roundtable discussion. In Scene 3, the play can explore the characters in person.
 
 
 
 ## Todo
 
-1. Complete script
+1. Complete the story
 2. Generalize to English
-3. General interface
