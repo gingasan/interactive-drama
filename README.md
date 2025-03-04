@@ -2,7 +2,7 @@
 
 This is the Chinese demonstration for the ACL 2024 paper ([From Role-Play to Drama-Interaction: An LLM Solution](https://aclanthology.org/2024.findings-acl.196.pdf)).
 
-Our secondary work discusses the immersion-agency paradigm of a nice interactive experience ([Towards Enhanced Immersion and Agency for LLM-based Interactive Drama](https://arxiv.org/pdf/2502.17878)).
+Our secondary work discusses the immersion-agency paradigm towards a nice interactive experience ([Towards Enhanced Immersion and Agency for LLM-based Interactive Drama](https://arxiv.org/pdf/2502.17878)).
 
 
 
